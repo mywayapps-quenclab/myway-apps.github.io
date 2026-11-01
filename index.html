@@ -52,16 +52,46 @@
       margin-bottom: 12px;
     }
 
-    .invite-code {
+    .invite-label {
       font-size: 13px;
       color: #666;
+      margin-bottom: 6px;
+    }
+
+    .invite-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
       margin-bottom: 32px;
+    }
+
+    .invite-code {
+      font-size: 26px;
+      font-weight: 700;
+      color: #1a1a1a;
       background: #f5f5f5;
       padding: 8px 16px;
       border-radius: 8px;
-      display: inline-block;
       font-family: monospace;
-      letter-spacing: 1px;
+      letter-spacing: 4px;
+    }
+
+    .copy-btn {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 2px solid #208AEF;
+      background: white;
+      color: #208AEF;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .no-code {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 32px;
     }
 
     .btn {
@@ -121,7 +151,16 @@
 
     <h1>You've been invited to join a calendar</h1>
 
-    <div class="invite-code" id="code-display"></div>
+    <div id="code-section">
+      <div class="invite-label">Invite code</div>
+      <div class="invite-row">
+        <span class="invite-code" id="code-display"></span>
+        <button class="copy-btn" id="copy-btn" type="button">Copy code</button>
+      </div>
+    </div>
+    <div class="no-code" id="no-code" style="display: none;">
+      No invite code found in this link.
+    </div>
 
     <a class="btn btn-primary" id="open-btn" href="#">
       Open in GatherNext
@@ -134,35 +173,55 @@
     </div>
 
     <div class="stores">
-      <a href="https://play.google.com/store" id="android-link">
+      <a href="https://play.google.com/store/apps/details?id=com.mywayapps.gathernext" id="android-link">
         Google Play
       </a>
+      <!-- During open testing: set this to the TestFlight public link
+           (https://testflight.apple.com/join/...). At launch: the App
+           Store link (https://apps.apple.com/app/id...). -->
       <a href="https://apps.apple.com" id="ios-link">
         App Store
       </a>
+    </div>
+
+    <div class="hint" id="installed-hint">
+      Just installed GatherNext? Come back to this page and tap
+      Open in GatherNext, or enter this code in Join/Create Calendar.
     </div>
   </div>
 
   <script>
     // Read the invite code from the URL path
-    // URL format: myway-apps.com/join/INVITECODE
+    // URL format: join.myway-apps.com/INVITECODE
     const pathParts = window.location.pathname.split('/').filter(Boolean);
-    const inviteCode = pathParts[pathParts.length - 1] ?? '';
+    const inviteCode = (pathParts[pathParts.length - 1] ?? '').toUpperCase();
 
-    if (inviteCode && inviteCode !== 'join') {
-      document.getElementById('code-display').textContent =
-        'Invite code: ' + inviteCode.toUpperCase();
-      document.getElementById('open-btn').href =
-        'gathernext://join/' + inviteCode.toUpperCase();
+    if (inviteCode && inviteCode !== 'JOIN' && !inviteCode.includes('.')) {
+      document.getElementById('code-display').textContent = inviteCode;
+      document.getElementById('open-btn').href = 'gathernext://join/' + inviteCode;
     } else {
-      document.getElementById('code-display').textContent =
-        'No invite code found in this link.';
+      document.getElementById('code-section').style.display = 'none';
+      document.getElementById('no-code').style.display = 'block';
       document.getElementById('open-btn').style.display = 'none';
+      document.getElementById('installed-hint').style.display = 'none';
     }
 
-    // Update these links once your app is live in the stores
-    // document.getElementById('android-link').href = 'your play store url';
-    // document.getElementById('ios-link').href = 'your app store url';
+    const copyButton = document.getElementById('copy-btn');
+
+    copyButton.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(inviteCode);
+        copyButton.textContent = 'Copied';
+      } catch (error) {
+        // Clipboard blocked (e.g. not https): the code stays on screen to
+        // type in instead.
+        copyButton.textContent = 'Copy failed';
+      }
+
+      setTimeout(() => {
+        copyButton.textContent = 'Copy code';
+      }, 2000);
+    });
   </script>
 </body>
 </html>
